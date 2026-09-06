@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>高如玫書籍製作列表</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+      padding: 40px 20px;
+    }
+
+    /* 側邊欄切換按鈕 */
+    .menu-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: #2c3e50;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transition: background-color 0.2s ease;
+    }
+
+    .menu-btn:hover {
+      background-color: #1a252f;
+    }
+
+    /* 側邊欄本體 */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -290px;
+      width: 270px;
+      height: 100%;
+      background-color: #ffffff;
+      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+      transition: left 0.3s ease;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .sidebar-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 26px;
+      cursor: pointer;
+      color: #888;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-menu li {
+      margin-bottom: 6px;
+    }
+
+    .sidebar-menu a {
+      text-decoration: none;
+      color: #555;
+      font-size: 17px;
+      display: block;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: background-color 0.2s, color 0.2s;
+      cursor: pointer;
+    }
+
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+      background-color: #f0f4f8;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    /* 背景遮罩 */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 1050;
+    }
+
+    .overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* 主要內容區 */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 20px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 34px;
+      margin-bottom: 40px;
+      color: #1a1a1a;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+    }
+
+    /* 分類區塊控制 */
+    .section-block {
+      display: none;
+      margin-bottom: 60px;
+    }
+
+    .section-block.active {
+      display: block;
+    }
+
+    .section-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .section-title {
+      font-size: 24px;
+      color: #2c3e50;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+    }
+
+    .update-date {
+      font-size: 14px;
+      color: #718096;
+      font-weight: 400;
+    }
+
+    /* 子分類/年份標題 */
+    .year-title {
+      font-size: 20px;
+      color: #4a5568;
+      margin: 28px 0 16px 0;
+      padding-left: 10px;
+      border-left: 4px solid #2c3e50;
+      font-weight: 600;
+    }
+
+    .back-to-home-btn {
+      font-size: 15px;
+      color: #4a6572;
+      background-color: #edf2f7;
+      border: 1px solid #e2e8f0;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .back-to-home-btn:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* 書籍展示網格 */
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 30px 24px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .book-card {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      background-color: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+
+    .book-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+      border-color: #ddd;
+    }
+
+    .book-cover-wrap {
+      width: 100%;
+      height: 260px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+      background-color: #fafafa;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .book-cover {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12));
+    }
+
+    .book-title {
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      color: #222;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 48px;
+    }
+
+    /* 獲獎與特點說明標籤（深藍色、文字+1pt） */
+    .book-note {
+      font-size: 15px;
+      color: #1a365d;
+      background-color: #ebf8ff;
+      border: 1px solid #bee3f8;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin-top: 8px;
+      line-height: 1.35;
+      display: inline-block;
+      text-align: center;
+    }
+
+    /* 文字列表區塊樣式（技能檢定、參考書專用） */
+    .intro-text {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #4a5568;
+      background-color: #ffffff;
+      padding: 18px 22px;
+      border-radius: 8px;
+      border-left: 5px solid #2c3e50;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      margin-bottom: 28px;
+    }
+
+    .text-list-box {
+      background-color: #ffffff;
+      padding: 24px 30px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .sub-section-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 16px 0 8px 0;
+    }
+
+    .sub-section-title:first-child {
+      margin-top: 0;
+    }
+
+    .custom-ordered-list {
+      list-style-type: decimal;
+      padding-left: 24px;
+      font-size: 16px;
+      line-height: 2;
+      color: #2d3748;
+      margin-bottom: 12px;
+    }
+
+    .custom-ordered-list li {
+      margin-bottom: 6px;
+    }
+
+    .custom-ordered-list strong {
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    .custom-ordered-list span {
+      font-weight: 400;
+      color: #4a5568;
+    }
+
+    /* 側邊欄分類群組樣式 */
+    .nav-group {
+      margin-bottom: 8px;
+    }
+
+    .nav-group-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #2c3e50;
+      background-color: #f1f5f9;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .nav-group-title:hover {
+      background-color: #e2e8f0;
+    }
+
+    .nav-group-title .arrow {
+      font-size: 12px;
+      transition: transform 0.2s ease;
+      color: #64748b;
+    }
+
+    .nav-group-title.collapsed .arrow {
+      transform: rotate(-90deg);
+    }
+
+    .sub-menu {
+      list-style: none;
+      padding-left: 12px;
+      margin-top: 4px;
+      display: block;
+    }
+
+    .sub-menu.hidden {
+      display: none;
+    }
+
+    .sub-menu li a {
+      font-size: 16px;
+      padding: 7px 12px;
+      border-left: 3px solid transparent;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .sub-menu li a.active {
+      border-left-color: #2c3e50;
+      background-color: #f0f4f8;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    .empty-hint {
+      color: #999;
+      font-size: 16px;
+      padding: 20px 0;
+      grid-column: 1 / -1;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 側邊欄按鈕 -->
+  <button class="menu-btn" onclick="toggleSidebar()">☰ 目錄</button>
+
+  <!-- 側邊欄目錄本體 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">書籍分類目錄</span>
+      <button class="close-btn" onclick="toggleSidebar()">×</button>
+    </div>
+    <ul class="sidebar-menu">
+      <li style="margin-bottom: 12px;">
+        <a class="nav-item active" data-cat="bestseller" onclick="switchCategory('bestseller')">暢銷與重點書列表</a>
+      </li>
+
+      <!-- 高寶書版書籍列表 -->
+      <li class="nav-group">
+        <div class="nav-group-title" onclick="toggleSubmenu('submenu-gaobao', this)">
+          <span>高寶書版書籍列表</span>
+          <span class="arrow">▼</span>
+        </div>
+        <ul class="sub-menu" id="submenu-gaobao">
+          <li><a class="nav-item" data-cat="food" onclick="switchCategory('food')">飲食</a></li>
+          <li><a class="nav-item" data-cat="self-help" onclick="switchCategory('self-help')">心理勵志</a></li>
+          <li><a class="nav-item" data-cat="humanities" onclick="switchCategory('humanities')">人文社科</a></li>
+          <li><a class="nav-item" data-cat="religion" onclick="switchCategory('religion')">宗教命理</a></li>
+          <li><a class="nav-item" data-cat="fiction" onclick="switchCategory('fiction')">文學小說</a></li>
+          <li><a class="nav-item" data-cat="art" onclick="switchCategory('art')">藝術設計</a></li>
+          <li><a class="nav-item" data-cat="health" onclick="switchCategory('health')">醫療保健</a></li>
+          <li><a class="nav-item" data-cat="business" onclick="switchCategory('business')">商業理財</a></li>
+        </ul>
+      </li>
+
+      <!-- 台科大圖書書籍列表 -->
+      <li class="nav-group">
+        <div class="nav-group-title" onclick="toggleSubmenu('submenu-tkd', this)">
+          <span>台科大圖書書籍列表</span>
+          <span class="arrow">▼</span>
+        </div>
+        <ul class="sub-menu" id="submenu-tkd">
+          <li><a class="nav-item" data-cat="tkd-textbook" onclick="switchCategory('tkd-textbook')">108課綱教科書</a></li>
+          <li><a class="nav-item" data-cat="tkd-market" onclick="switchCategory('tkd-market')">市售書</a></li>
+          <li><a class="nav-item" data-cat="tkd-exam" onclick="switchCategory('tkd-exam')">技能檢定、參考書</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 點擊背景關閉遮罩 -->
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <div class="container">
+    <h1 class="page-title">高如玫書籍製作列表</h1>
+
+    <!-- 首頁：高寶書版暢銷書列表 & 台科大圖書重點書列表 -->
+    <section class="section-block active" id="sec-bestseller">
+      <div class="section-header-bar">
+        <h2 class="section-title">高寶書版暢銷書列表</h2>
+        <span class="update-date">2026.09.07更新</span>
+      </div>
+      <div class="book-grid">
+
+        <!-- 暢銷 1 -->
+        <a href="https://www.eslite.com/product/10012017642683090184003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/104/49/0011044991.jpg" alt="不是別人不懂你，而是你不懂得愛自己" class="book-cover">
+          </div>
+          <div class="book-title">不是別人不懂你，而是你不懂得愛自己</div>
+          <div class="book-note">熱銷破萬本暢銷紀念版</div>
+        </a>
+
+        <!-- 暢銷 2 -->
+        <a href="https://www.eslite.com/product/10012017642682635129004" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/01/0011000184.jpg" alt="輪迴八十六次的生命覺醒之旅" class="book-cover">
+          </div>
+          <div class="book-title">輪迴八十六次的生命覺醒之旅</div>
+        </a>
+
+        <!-- 暢銷 3 -->
+        <a href="https://www.eslite.com/product/10012017642682652387005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/24/0011002492.jpg" alt="宋慈洗冤罪案簿（共4冊）" class="book-cover">
+          </div>
+          <div class="book-title">宋慈洗冤罪案簿（共4冊）</div>
+          <div class="book-note">
+            獲讀墨電子書2024、2025年年度百大閱讀榜（文學小說類）<br>
+            獲讀墨電子書2024年年度百大暢銷榜文學類NO.59
+          </div>
+        </a>
+
+        <!-- 暢銷 4 -->
+        <a href="https://www.eslite.com/product/10012017642682539399008" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/098/52/0010985283.jpg" alt="山海經絕美水墨畫卷：奇禽異獸篇" class="book-cover">
+          </div>
+          <div class="book-title">山海經絕美水墨畫卷：奇禽異獸篇</div>
+        </a>
+
+        <!-- 暢銷 5 -->
+        <a href="https://www.eslite.com/product/1001123032682347917005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/095/19/0010951946.jpg" alt="大唐封診錄【第一部】：天雷決" class="book-cover">
+          </div>
+          <div class="book-title">大唐封診錄【第一部】：天雷決</div>
+          <div class="book-note">獲完美犯罪小說讀這本2024年年度最佳海外華文小說獎</div>
+        </a>
+
+        <!-- 暢銷 6 -->
+        <a href="https://www.eslite.com/product/1001123032682316502003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/094/51/0010945190.jpg" alt="執念" class="book-cover">
+          </div>
+          <div class="book-title">執念</div>
+          <div class="book-note">
+            獲完美犯罪小說讀這本2023年年度最佳海外華文小說獎<br>
+            獲讀墨電子書2023年年度百大閱讀榜全站排行NO.44
+          </div>
+        </a>
+
+        <!-- 暢銷 7 -->
+        <a href="https://www.eslite.com/product/1001123032682162793006" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682162793006/20220421061154000218.jpg" alt="且試天下（共4冊）" class="book-cover">
+          </div>
+          <div class="book-title">且試天下（共4冊）</div>
+        </a>
+
+        <!-- 暢銷 8 -->
+        <a href="https://www.eslite.com/product/1001123032682036566002" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682036566002/20220111061735962496.jpg" alt="雪中悍刀行（共20冊）" class="book-cover">
+          </div>
+          <div class="book-title">雪中悍刀行（共20冊）</div>
+        </a>
+
+      </div>
+
+      <!-- 第二個標題：台科大圖書重點書列表 -->
+      <div class="section-header-bar" style="margin-top: 50px;" id="sec-tkd-title">
+        <h2 class="section-title">台科大圖書重點書列表</h2>
+      </div>
+      <div class="book-grid">
+
+        <a href="https://www.pubu.com.tw/ebook/637976" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res3.pubu.tw/docs/543802/26472/dxUNQ9_xl.jpg" alt="家政群《色彩概論》" class="book-cover">
+          </div>
+          <div class="book-title">家政群《色彩概論》</div>
+          <div class="book-note">製作2019年初版（取照成書）</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/673657" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res1.pubu.tw/docs/575576/89994/27UrfD_xl.jpg" alt="設計群《色彩原理》" class="book-cover">
+          </div>
+          <div class="book-title">設計群《色彩原理》</div>
+          <div class="book-note">製作2020年初版送審</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412825682" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2681855349001/20200208032821318981.jpg" alt="運算思維與App Inventor 2程式設計" class="book-cover">
+          </div>
+          <div class="book-title">運算思維與App Inventor 2程式設計</div>
+          <div class="book-note">2020年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412746479" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s2.eslite.com/unsafe/fit-in/x640/filters:format(webp)/s.eslite.com/upload/product/o/2681723520006/ec1685832.jpg" alt="程式設計實習－使用WEBDUINO Blockly程式語言" class="book-cover">
+          </div>
+          <div class="book-title">程式設計實習－使用WEBDUINO Blockly程式語言</div>
+          <div class="book-note">製作2019年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412666018" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/Upload/Product/201803/o/636577363196822500.jpg" alt="門市實務企劃乙級門市服務術科企劃書" class="book-cover">
+          </div>
+          <div class="book-title">門市實務企劃乙級門市服務術科企劃書</div>
+          <div class="book-note">製作2018年初版</div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 飲食 -->
+    <section class="section-block" id="sec-food">
+      <div class="section-header-bar">
+        <h2 class="section-title">飲食</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <h3 class="year-title">2026年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642683080528008" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/104/37/0011043726.jpg" alt="良藥不苦口！順應四季的療癒漢方甜點" class="book-cover">
+          </div>
+          <div class="book-title">良藥不苦口！順應四季的療癒漢方甜點</div>
+          <div class="book-note">開發作者自製書</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 心理勵志 -->
+    <section class="section-block" id="sec-self-help">
+      <div class="section-header-bar">
+        <h2 class="section-title">心理勵志</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 2026年 -->
+      <h3 class="year-title">2026年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642683141946000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/105/16/0011051661.jpg" alt="人生90%的事，都不值得你在意" class="book-cover">
+          </div>
+          <div class="book-title">人生90%的事，都不值得你在意</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642683111386003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/104/78/0011047863.jpg" alt="不靠意志力，寫下來就能解決拖延症" class="book-cover">
+          </div>
+          <div class="book-title">不靠意志力，寫下來就能解決拖延症</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642683090184003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/104/49/0011044991.jpg" alt="不是別人不懂你，而是你不懂得愛自己" class="book-cover">
+          </div>
+          <div class="book-title">不是別人不懂你，而是你不懂得愛自己</div>
+          <div class="book-note">熱銷破萬本暢銷紀念版</div>
+        </a>
+      </div>
+
+      <!-- 2025年 -->
+      <h3 class="year-title">2025年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642683016618001" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/103/48/0011034869.jpg" alt="重啟你的情緒開關" class="book-cover">
+          </div>
+          <div class="book-title">重啟你的情緒開關</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682924810002" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/b2b/newItem/2025/06/18/7928_150537330_527_mainCoverImage1.jpg" alt="我已經很好，不需要最好" class="book-cover">
+          </div>
+          <div class="book-title">我已經很好，不需要最好</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682847282009" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/101/60/0011016050.jpg" alt="你愛自己的方式，定義了別人愛你的樣子" class="book-cover">
+          </div>
+          <div class="book-title">你愛自己的方式，定義了別人愛你的樣子</div>
+        </a>
+      </div>
+
+      <!-- 2024年 -->
+      <h3 class="year-title">2024年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682618454000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/099/75/0010997590.jpg" alt="活得越通透，靈魂越自在" class="book-cover">
+          </div>
+          <div class="book-title">活得越通透，靈魂越自在</div>
+        </a>
+      </div>
+
+      <!-- 2023年 -->
+      <h3 class="year-title">2023年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682495665001" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/097/71/0010977196.jpg" alt="允許自己活成想要的幸福模樣" class="book-cover">
+          </div>
+          <div class="book-title">允許自己活成想要的幸福模樣</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682424700001" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/096/48/0010964801.jpg" alt="啟發" class="book-cover">
+          </div>
+          <div class="book-title">啟發</div>
+        </a>
+      </div>
+
+      <!-- 2022年 -->
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/1001123032682301862006" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/094/26/0010942692.jpg" alt="與負面情緒愉快相處的轉變練習" class="book-cover">
+          </div>
+          <div class="book-title">與負面情緒愉快相處的轉變練習</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682246048008" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/093/54/0010935454.jpg" alt="告別情緒泥沼的內在復原力" class="book-cover">
+          </div>
+          <div class="book-title">告別情緒泥沼的內在復原力</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682222511007" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/093/24/0010932432.jpg" alt="擁抱受傷的內在小孩" class="book-cover">
+          </div>
+          <div class="book-title">擁抱受傷的內在小孩</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682197454002" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/092/95/0010929585.jpg" alt="無懼迷茫是種優勢，人間清醒才是本事" class="book-cover">
+          </div>
+          <div class="book-title">無懼迷茫是種優勢，人間清醒才是本事</div>
+        </a>
+      </div>
+
+      <!-- 2021年 -->
+      <h3 class="year-title">2021年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/1001123032682040761004" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/089/68/0010896887.jpg" alt="實現爆發式成長" class="book-cover">
+          </div>
+          <div class="book-title">實現爆發式成長</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 人文社科 -->
+    <section class="section-block" id="sec-humanities">
+      <div class="section-header-bar">
+        <h2 class="section-title">人文社科</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 2026年 -->
+      <h3 class="year-title">2026年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642683121771004" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/104/91/0011049137.jpg" alt="少年犯罪者們" class="book-cover">
+          </div>
+          <div class="book-title">少年犯罪者們</div>
+        </a>
+      </div>
+
+      <!-- 2025年 -->
+      <h3 class="year-title">2025年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682937837003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/102/55/0011025574.jpg" alt="連環殺手的學徒" class="book-cover">
+          </div>
+          <div class="book-title">連環殺手的學徒</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682853998000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/101/71/0011017144.jpg" alt="暗網惡帝" class="book-cover">
+          </div>
+          <div class="book-title">暗網惡帝</div>
+          <div class="book-note">獲完美犯罪小說讀這本2026年年度最佳非小說獎</div>
+        </a>
+      </div>
+
+      <!-- 2024年 -->
+      <h3 class="year-title">2024年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682686714006" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/54/0011005477.jpg" alt="罪惡鑑定人" class="book-cover">
+          </div>
+          <div class="book-title">罪惡鑑定人</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682612976003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/099/63/0010996354.jpg" alt="解剖刀劃開的真相" class="book-cover">
+          </div>
+          <div class="book-title">解剖刀劃開的真相</div>
+          <div class="book-note">誠品2025年Summer Reading選書</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 宗教命理 -->
+    <section class="section-block" id="sec-religion">
+      <div class="section-header-bar">
+        <h2 class="section-title">宗教命理</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 2026年 -->
+      <h3 class="year-title">2026年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642683186085009" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/105/74/0011057404.jpg" alt="一個靈魂，穿越前世與未來的進化之旅" class="book-cover">
+          </div>
+          <div class="book-title">一個靈魂，穿越前世與未來的進化之旅</div>
+        </a>
+      </div>
+
+      <!-- 2024年 -->
+      <h3 class="year-title">2024年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682808182003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/90/0011009074.jpg" alt="輪迴兩千年的命定相遇之旅" class="book-cover">
+          </div>
+          <div class="book-title">輪迴兩千年的命定相遇之旅</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682635129004" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/01/0011000184.jpg" alt="輪迴八十六次的生命覺醒之旅" class="book-cover">
+          </div>
+          <div class="book-title">輪迴八十六次的生命覺醒之旅</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 文學小說 -->
+    <section class="section-block" id="sec-fiction">
+      <div class="section-header-bar">
+        <h2 class="section-title">文學小說</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 大分類1：懸疑推理 -->
+      <h3 class="year-title">懸疑推理</h3>
+      <div class="book-grid">
+
+        <a href="https://www.eslite.com/product/10012017642683203052007" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/105/98/0011059874.jpg" alt="桐花中路私立協濟醫院怪談" class="book-cover">
+          </div>
+          <div class="book-title">桐花中路私立協濟醫院怪談</div>
+          <div class="book-note">典藏紀念版（改版）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682823719000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/101/19/0011011935.jpg" alt="北冥迷案（共2冊）" class="book-cover">
+          </div>
+          <div class="book-title">北冥迷案（共2冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642683051244005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/103/92/0011039239.jpg" alt="大唐封診錄【第三部】地獄變" class="book-cover">
+          </div>
+          <div class="book-title">大唐封診錄【第三部】地獄變</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682652387005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/24/0011002492.jpg" alt="宋慈洗冤罪案簿（共4冊）" class="book-cover">
+          </div>
+          <div class="book-title">宋慈洗冤罪案簿（共4冊）</div>
+          <div class="book-note">
+            獲讀墨電子書2024、2025年年度百大閱讀榜（文學小說類）<br>
+            獲讀墨電子書2024年年度百大暢銷榜文學類NO.59
+          </div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682324229008" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/094/74/0010947432.jpg" alt="永徽迷局（共2冊）" class="book-cover">
+          </div>
+          <div class="book-title">永徽迷局（共2冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682347917005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/095/19/0010951946.jpg" alt="大唐封診錄【第一部】天雷決" class="book-cover">
+          </div>
+          <div class="book-title">大唐封診錄【第一部】天雷決</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682359542004" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/095/40/0010954076.jpg" alt="大唐封診錄【第二部】狩案司" class="book-cover">
+          </div>
+          <div class="book-title">大唐封診錄【第二部】狩案司</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682316502003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/094/51/0010945190.jpg" alt="執念" class="book-cover">
+          </div>
+          <div class="book-title">執念</div>
+          <div class="book-note">
+            獲完美犯罪小說讀這本2023年年度最佳海外華文小說獎<br>
+            獲讀墨電子書2023年年度百大閱讀榜全站排行NO.44
+          </div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682018302000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/089/19/0010891931.jpg" alt="長安驚雲（共2冊）" class="book-cover">
+          </div>
+          <div class="book-title">長安驚雲（共2冊）</div>
+        </a>
+
+      </div>
+
+      <!-- 大分類2：歷史武俠 -->
+      <h3 class="year-title">歷史武俠</h3>
+      <div class="book-grid">
+
+        <a href="https://www.books.com.tw/products/0011062203?sloc=main" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/106/22/0011062203.jpg" alt="劍來第三部（共5冊）" class="book-cover">
+          </div>
+          <div class="book-title">劍來第三部（共5冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682481603000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/097/44/0010974496.jpg" alt="劍來第二部（共6冊）" class="book-cover">
+          </div>
+          <div class="book-title">劍來第二部（共6冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682441791006?srsltid=AfmBOooMvofebf6edrm0vUDoFUumMgPYAHEsmfMoe2ufcM_8JAbH6YL3" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/b2b/vendor/0120230901135136/mainCoverImage1_1145472.jpg" alt="劍來第一部（共6冊）" class="book-cover">
+          </div>
+          <div class="book-title">劍來第一部（共6冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682162793006" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682162793006/20220421061154000218.jpg" alt="且試天下（共4冊）" class="book-cover">
+          </div>
+          <div class="book-title">且試天下（共4冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682036566002" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682036566002/20220111061735962496.jpg" alt="雪中悍刀行（共20冊）" class="book-cover">
+          </div>
+          <div class="book-title">雪中悍刀行（共20冊）</div>
+        </a>
+
+      </div>
+
+      <!-- 大分類3：羅曼史 -->
+      <h3 class="year-title">羅曼史</h3>
+      <div class="book-grid">
+
+        <a href="https://www.eslite.com/product/10012017642682606544003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/092/88/0010928891.jpg" alt="長公主（共6冊）" class="book-cover">
+          </div>
+          <div class="book-title">長公主（共6冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032843841?srsltid=AfmBOoqXuAOFHUiDKmKoxX0RS0nuC8UsfRZeR4jOHfcbqgqViiXxACqI" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/Upload/Product/202005/o/637256481304132500.jpg" alt="最動聽的告白" class="book-cover">
+          </div>
+          <div class="book-title">最動聽的告白</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032849797?srsltid=AfmBOorRLKETRsUXM-tUFSDeUNhqp-gTiwwDazOjvGHESLFXriisvtLP" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/Upload/Product/202006/o/637274625893680000.jpg" alt="戀愛吧，江小姐（共2冊）" class="book-cover">
+          </div>
+          <div class="book-title">戀愛吧，江小姐（共2冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032856140" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2681895540000/20200715055546903453.jpg" alt="隔壁那個飯桶（共2冊）" class="book-cover">
+          </div>
+          <div class="book-title">隔壁那個飯桶（共2冊）</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032864779" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/086/67/0010866730.jpg" alt="喜歡妳喜歡我的樣子" class="book-cover">
+          </div>
+          <div class="book-title">喜歡妳喜歡我的樣子</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032866923?srsltid=AfmBOorA6IOvC0UGQJerFOoceY-KXs5ksga6RF4hvn5IOYfQXO8DIexp" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2681910945001/20200819061433901844.jpg" alt="半是蜜糖半是傷" class="book-cover">
+          </div>
+          <div class="book-title">半是蜜糖半是傷</div>
+        </a>
+
+      </div>
+
+      <!-- 大分類4：文學 -->
+      <h3 class="year-title">文學</h3>
+      <div class="book-grid">
+
+        <a href="https://www.eslite.com/product/1001123032682046458007?srsltid=AfmBOorLE2M9jL8mX8KdlFl2M0vHamYte3uCQvp5fFrO-tk8bVGCqc2j" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682046458007/20210806062218429504.jpg" alt="橘子的滋味" class="book-cover">
+          </div>
+          <div class="book-title">橘子的滋味</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682065486005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/090/21/0010902107.jpg" alt="喬家的兒女（共2冊）" class="book-cover">
+          </div>
+          <div class="book-title">喬家的兒女（共2冊）</div>
+        </a>
+
+      </div>
+
+    </section>
+
+    <!-- 藝術設計 -->
+    <section class="section-block" id="sec-art">
+      <div class="section-header-bar">
+        <h2 class="section-title">藝術設計</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 2026年 -->
+      <h3 class="year-title">2026年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642683151331001" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/105/33/0011053333.jpg" alt="墨韻西遊：國風速寫插畫集" class="book-cover">
+          </div>
+          <div class="book-title">墨韻西遊：國風速寫插畫集</div>
+        </a>
+      </div>
+
+      <!-- 2025年 -->
+      <h3 class="year-title">2025年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682906927001" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/102/22/0011022223.jpg" alt="山海經神怪大全" class="book-cover">
+          </div>
+          <div class="book-title">山海經神怪大全</div>
+        </a>
+      </div>
+
+      <!-- 2024年 -->
+      <h3 class="year-title">2024年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682579544000" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/099/10/0010991036.jpg" alt="山海經絕美水墨畫卷：山精海怪篇" class="book-cover">
+          </div>
+          <div class="book-title">山海經絕美水墨畫卷：山精海怪篇</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682539399008" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/098/52/0010985283.jpg" alt="山海經絕美水墨畫卷：奇禽異獸篇" class="book-cover">
+          </div>
+          <div class="book-title">山海經絕美水墨畫卷：奇禽異獸篇</div>
+        </a>
+      </div>
+
+      <!-- 2022年 -->
+      <h3 class="year-title">2022年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/1001123032682175431001" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/092/51/0010925174.jpg" alt="故宮研究員帶你看懂中國名畫" class="book-cover">
+          </div>
+          <div class="book-title">故宮研究員帶你看懂中國名畫</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 醫療保健 -->
+    <section class="section-block" id="sec-health">
+      <div class="section-header-bar">
+        <h2 class="section-title">醫療保健</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 2024年 -->
+      <h3 class="year-title">2024年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/10012017642682646184009" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/100/13/0011001332.jpg" alt="6週彈性斷食燃脂計畫" class="book-cover">
+          </div>
+          <div class="book-title">6週彈性斷食燃脂計畫</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/10012017642682512749004" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/098/00/0010980050.jpg" alt="瓦解內臟脂肪！營養科醫師的飽瘦飲食指南" class="book-cover">
+          </div>
+          <div class="book-title">瓦解內臟脂肪！營養科醫師的飽瘦飲食指南</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 商業理財 -->
+    <section class="section-block" id="sec-business">
+      <div class="section-header-bar">
+        <h2 class="section-title">商業理財</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 2022年 -->
+      <h3 class="year-title">2022年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/1001123032682277362005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/093/92/0010939218.jpg" alt="跨越每一個不敢" class="book-cover">
+          </div>
+          <div class="book-title">跨越每一個不敢</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682191205006" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://www.books.com.tw/img/001/092/82/0010928269.jpg" alt="精準社交" class="book-cover">
+          </div>
+          <div class="book-title">精準社交</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001123032682133840005" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682133840005/20220219060815991228.jpg" alt="翻轉思維" class="book-cover">
+          </div>
+          <div class="book-title">翻轉思維</div>
+        </a>
+      </div>
+
+      <!-- 2021年 -->
+      <h3 class="year-title">2021年</h3>
+      <div class="book-grid">
+        <a href="https://www.eslite.com/product/1001123032682079384007" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2682079384007/20211015054118316055.jpg" alt="精進思維" class="book-cover">
+          </div>
+          <div class="book-title">精進思維</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 台科大圖書：108課綱教科書 -->
+    <section class="section-block" id="sec-tkd-textbook">
+      <div class="section-header-bar">
+        <h2 class="section-title">108課綱教科書</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+      <div class="book-grid">
+
+        <a href="https://www.pubu.com.tw/ebook/637976" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res3.pubu.tw/docs/543802/26472/dxUNQ9_xl.jpg" alt="家政群《色彩概論》" class="book-cover">
+          </div>
+          <div class="book-title">家政群《色彩概論》</div>
+          <div class="book-note">製作2019年初版（取照成書）</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/673657" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res1.pubu.tw/docs/575576/89994/27UrfD_xl.jpg" alt="設計群《色彩原理》" class="book-cover">
+          </div>
+          <div class="book-title">設計群《色彩原理》</div>
+          <div class="book-note">製作2020年初版送審</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/637998" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res1.pubu.tw/docs/543824/39079/84SgJK_xl.jpg" alt="家政群《美髮造型實務》上" class="book-cover">
+          </div>
+          <div class="book-title">家政群《美髮造型實務》上</div>
+          <div class="book-note">製作2020年初版至送審</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/638003" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res2.pubu.tw/docs/543829/41987/ncox-N_xl.jpg" alt="家政群《美髮造型實務》下" class="book-cover">
+          </div>
+          <div class="book-title">家政群《美髮造型實務》下</div>
+          <div class="book-note">2020年初版</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/679457" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res4.pubu.tw/docs/580507/2731/M-7CX6_xl.jpg" alt="餐旅群《旅遊實務》上" class="book-cover">
+          </div>
+          <div class="book-title">餐旅群《旅遊實務》上</div>
+          <div class="book-note">製作2019年初版送審通過</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/631051" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res2.pubu.tw/docs/537713/6053/N5ujCN_xl.jpg" alt="餐旅群《旅遊實務》下" class="book-cover">
+          </div>
+          <div class="book-title">餐旅群《旅遊實務》下</div>
+          <div class="book-note">製作2020年初版至送審</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/631054" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res1.pubu.tw/docs/537716/8437/7jj0nh_xl.jpg" alt="餐旅群《旅館客務實務》上" class="book-cover">
+          </div>
+          <div class="book-title">餐旅群《旅館客務實務》上</div>
+          <div class="book-note">製作2019年初版送審通過</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/631055" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res2.pubu.tw/docs/537717/8252/vbm9ON_xl.jpg" alt="餐旅群《旅館客務實務》下" class="book-cover">
+          </div>
+          <div class="book-title">餐旅群《旅館客務實務》下</div>
+          <div class="book-note">製作2020年初版至送審</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/613939" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res3.pubu.tw/docs/522182/24019/0oWi9C_xl.jpg" alt="機械群《機械製造》上" class="book-cover">
+          </div>
+          <div class="book-title">機械群《機械製造》上</div>
+          <div class="book-note">製作2019年初版（取照成書）</div>
+        </a>
+
+        <a href="https://www.pubu.com.tw/ebook/613946" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://res2.pubu.tw/docs/522189/24710/vd0-hs_xl.jpg" alt="機械群《機械製造》下" class="book-cover">
+          </div>
+          <div class="book-title">機械群《機械製造》下</div>
+          <div class="book-note">製作2019年初版（取照成書）</div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 台科大圖書：市售書 -->
+    <section class="section-block" id="sec-tkd-market">
+      <div class="section-header-bar">
+        <h2 class="section-title">市售書</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+      <div class="book-grid">
+
+        <a href="https://www.eslite.com/product/1001122412825682" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2681855349001/20200208032821318981.jpg" alt="運算思維與App Inventor 2程式設計" class="book-cover">
+          </div>
+          <div class="book-title">運算思維與App Inventor 2程式設計</div>
+          <div class="book-note">2020年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412746479" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s2.eslite.com/unsafe/fit-in/x640/filters:format(webp)/s.eslite.com/upload/product/o/2681723520006/ec1685832.jpg" alt="程式設計實習－使用WEBDUINO Blockly程式語言" class="book-cover">
+          </div>
+          <div class="book-title">程式設計實習－使用WEBDUINO Blockly程式語言</div>
+          <div class="book-note">製作2019年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412738663" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2681703868005/ec1635247.jpg" alt="用FlipRobot E300學運算思維與程式設計FlipCode" class="book-cover">
+          </div>
+          <div class="book-title">用FlipRobot E300學運算思維與程式設計FlipCode</div>
+          <div class="book-note">製作2018年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412666018" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/Upload/Product/201803/o/636577363196822500.jpg" alt="門市實務企劃乙級門市服務術科企劃書" class="book-cover">
+          </div>
+          <div class="book-title">門市實務企劃乙級門市服務術科企劃書</div>
+          <div class="book-note">製作2018年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412643140" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/upload/product/o/2681530612000/741151.jpg" alt="用Airblock模組化無人機輕鬆學圖形化程式語言" class="book-cover">
+          </div>
+          <div class="book-title">用Airblock模組化無人機輕鬆學圖形化程式語言</div>
+          <div class="book-note">製作2017年初版</div>
+        </a>
+
+        <a href="https://www.eslite.com/product/1001122412628080" target="_blank" rel="noopener noreferrer" class="book-card">
+          <div class="book-cover-wrap">
+            <img src="https://s.eslite.com/Upload/Product/201709/o/636422707638810000.jpg" alt="C語言程式設計" class="book-cover">
+          </div>
+          <div class="book-title">C語言程式設計</div>
+          <div class="book-note">製作2017年初版</div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 台科大圖書：技能檢定、參考書 -->
+    <section class="section-block" id="sec-tkd-exam">
+      <div class="section-header-bar">
+        <h2 class="section-title">技能檢定、參考書</h2>
+        <button class="back-to-home-btn" onclick="switchCategory('bestseller')">返回書籍列表</button>
+      </div>
+
+      <!-- 開頭說明文字 -->
+      <div class="intro-text">
+        台科大圖書書系眾多，涵蓋所有高職教學用書，以「技能檢定」、「升科大四技」書系所占比重較高，也是歷年銷售重點；為使使用者能在試前取得最新資訊，順利考照與升學，書系皆積極改版。
+      </div>
+
+      <!-- 大標題1：技能檢定乙級 -->
+      <h3 class="year-title">技能檢定乙級</h3>
+      <div class="text-list-box">
+        <ol class="custom-ordered-list">
+          <li><strong>《中式麵食加工酥油皮、糕漿皮類》學術科檢定書</strong><span>（2017～2020年歷年改版）</span></li>
+          <li><strong>《冷凍空調裝修》學術科檢定書</strong><span>（2015年新版、2016年改版）</span></li>
+          <li><strong>《網頁設計》學科題庫檢定書</strong><span>（2016年新版）</span></li>
+        </ol>
+      </div>
+
+      <!-- 大標題2：技能檢定丙級 -->
+      <h3 class="year-title">技能檢定丙級</h3>
+      <div class="text-list-box">
+        <ol class="custom-ordered-list">
+          <li><strong>《烘焙食品》學科題庫檢定書</strong><span>（2017年～2020年歷年改版）</span></li>
+          <li><strong>《中式麵食加工》學科題庫檢定書</strong><span>（2018年～2020年歷年改版）</span></li>
+          <li><strong>《穀類加工含丙級烘焙食品》學術科檢定書</strong><span>（2017年～2020年歷年改版）</span></li>
+          <li><strong>《穀類加工含丙級中式麵食加工》學術科檢定書</strong><span>（2017年～2020年歷年改版）</span></li>
+          <li><strong>《烘焙食品麵包、西點蛋糕項》學術科檢定書</strong><span>（2017年～2020年歷年改版）</span></li>
+          <li><strong>《門市服務》學科題庫檢定書</strong><span>（2018年初版）</span></li>
+          <li><strong>《門市服務》學術科檢定書</strong><span>（2018年初版）</span></li>
+          <li><strong>《國貿業務》學科題庫檢定書</strong><span>（2016年改版）</span></li>
+          <li><strong>《國貿業務》術科檢定書</strong><span>（2016～2017年歷年改版）</span></li>
+          <li><strong>《冷凍空調裝修》學術科檢定書</strong><span>（2016年改版）</span></li>
+          <li><strong>《測量》學術科檢定書</strong><span>（2016年改版）</span></li>
+        </ol>
+      </div>
+
+      <!-- 大標題3：校訂書 -->
+      <h3 class="year-title">校訂書</h3>
+      <div class="text-list-box">
+        <ol class="custom-ordered-list">
+          <li><strong>《旅遊實務》I、II</strong><span>（2016年～2019年歷年改版）</span></li>
+          <li><strong>《專題製作SOP最佳祕笈》商業與管理群適用</strong><span>（2017年新版）</span></li>
+          <li><strong>《專題製作最佳祕笈》商業與管理群適用</strong><span>（2017年新版）</span></li>
+          <li><strong>《旅館實務》I、II</strong><span>（2017年新版）</span></li>
+          <li><strong>《餐飲安全與衛生》全一冊</strong><span>（2016年新版）</span></li>
+        </ol>
+      </div>
+
+      <!-- 大標題4：參考書 -->
+      <h3 class="year-title">參考書</h3>
+      <div class="text-list-box">
+        <ol class="custom-ordered-list">
+          <li><strong>108新課綱《數學B》第二冊學習講義</strong><span>（2020年初版）</span></li>
+          <li><strong>108新課綱《數學B》第一冊學習講義</strong><span>（2019年初版版）</span></li>
+          <li><strong>工程與管理類《基礎化學》升學講義</strong><span>（2017年～2019年歷年改版）</span></li>
+          <li><strong>工程與管理類《基礎物理》升學講義</strong><span>（2018年～2019年歷年改版）</span></li>
+          <li><strong>餐旅群《餐旅概論》升學講義</strong><span>（2016年～2019年歷年改版）</span></li>
+          <li><strong>機械群《專業一、二歷屆試題》</strong><span>（2015年～2018年歷年改版）</span></li>
+          <li><strong>餐旅群《專業一、二歷屆試題》</strong><span>（2017年初版）</span></li>
+          <li><strong>餐旅群《飲料與調酒》升學講義</strong><span>（2016年～2017年歷年改版）</span></li>
+          <li><strong>餐旅群《餐旅服務》升學講義</strong><span>（2016年改版）</span></li>
+          <li><strong>共同科《國文歷屆試題完全攻略》</strong><span>（2015年～2016年歷年改版）</span></li>
+          <li><strong>外語群日語類《日文閱讀與翻譯》</strong><span>（2015年改版）</span></li>
+          <li><strong>農業群《農業概論》升學講義</strong><span>（2015年改版）</span></li>
+        </ol>
+      </div>
+
+      <!-- 大標題5：教學附件 -->
+      <h3 class="year-title">教學附件</h3>
+      <div class="text-list-box">
+        <div class="sub-section-title">（一）審定本</div>
+        <ol class="custom-ordered-list">
+          <li><strong>機械群《機械製造上》、《機械製造下》習作本、測驗卷、教師手冊</strong><span>（2019年初版）</span></li>
+          <li><strong>家政群《色彩概論》習作本、教師手冊、繪圖本</strong><span>（2019年初版）</span></li>
+          <li><strong>餐旅群《旅遊實務上》習作本、教師手冊</strong><span>（2020年初版）</span></li>
+          <li><strong>餐旅群《旅館客務實務上》習作本、教師手冊</strong><span>（2020年初版）</span></li>
+        </ol>
+
+        <div class="sub-section-title">（二）校定本</div>
+        <ol class="custom-ordered-list">
+          <li><strong>《旅遊實務》I、II習作本、教師手冊</strong><span>（2016年～2019年歷年改版）</span></li>
+          <li><strong>《旅館實務》I、II習作本、教師手冊</strong><span>（2017年改版）</span></li>
+          <li><strong>《蔬果切雕》實習本</strong><span>（2015年初版）</span></li>
+        </ol>
+
+        <div class="sub-section-title">（三）技能檢定</div>
+        <ol class="custom-ordered-list">
+          <li><strong>丙級《烘焙食品》學科檢定模擬測驗試題</strong><span>（2017年初版）</span></li>
+          <li><strong>丙級《國貿業務》學科檢定模擬測驗試題</strong><span>（2016年初版）</span></li>
+          <li><strong>乙級《印前製程》學科檢定模擬測驗試題</strong><span>（2015年初版）</span></li>
+        </ol>
+
+        <div class="sub-section-title">（四）參考書</div>
+        <ol class="custom-ordered-list">
+          <li><strong>餐旅群《餐旅概論》隨堂講義</strong><span>（2017年～2019年歷年改版）</span></li>
+          <li><strong>餐旅群《餐旅概論》單字口袋書</strong><span>（2016年～2019年歷年改版）</span></li>
+          <li><strong>餐旅群《飲料與調酒》單字口袋書</strong><span>（2016年～2017年歷年改版）</span></li>
+          <li><strong>餐旅群《餐旅概論》模擬測驗試題</strong><span>（2016年改版）</span></li>
+        </ol>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+
+    function toggleSubmenu(id, headerElem) {
+      const submenu = document.getElementById(id);
+      if (submenu) {
+        submenu.classList.toggle('hidden');
+        if (headerElem) {
+          headerElem.classList.toggle('collapsed');
+        }
+      }
+    }
+
+    function switchCategory(categoryId, scrollTargetId) {
+      const sections = document.querySelectorAll('.section-block');
+      sections.forEach(sec => sec.classList.remove('active'));
+
+      const targetSection = document.getElementById('sec-' + categoryId);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+
+      const navItems = document.querySelectorAll('.sidebar-menu a');
+      navItems.forEach(item => {
+        if (item.getAttribute('data-cat') === categoryId && (!scrollTargetId || item.getAttribute('data-target') === scrollTargetId)) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+
+      if (scrollTargetId) {
+        setTimeout(() => {
+          const elem = document.getElementById(scrollTargetId);
+          if (elem) {
+            elem.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  </script>
+
+</body>
+</html>
